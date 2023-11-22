@@ -38,16 +38,19 @@ git clone --recursive https://github.com/princeton-vl/DROID-SLAM.git
 
 2. Creating a new anaconda environment using the provided .yaml file. Use `environment_novis.yaml` to if you do not want to use the visualization
 ```Bash
+# updated
 conda env create -f environment.yaml
+conda activate droidenv
+conda install cudatoolkit-dev=11.3
 pip install evo --upgrade --no-binary evo
 pip install gdown
+pip install open3d -U
 ```
 
 3. Compile the extensions (takes about 10 minutes)
 ```Bash
 python setup.py install
 ```
-
 
 ## Demos
 

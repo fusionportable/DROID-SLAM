@@ -50,7 +50,7 @@ def create_point_actor(points, colors):
     point_cloud.colors = o3d.utility.Vector3dVector(colors)
     return point_cloud
 
-def droid_visualization(video, device="cuda:0"):
+def droid_visualization(video, device="cuda:0", save_path=None):
     """ DROID visualization frontend """
 
     torch.cuda.set_device(device)
@@ -132,6 +132,23 @@ def droid_visualization(video, device="cuda:0"):
                 point_actor = create_point_actor(pts, clr)
                 vis.add_geometry(point_actor)
                 droid_visualization.points[ix] = point_actor
+
+            if save_path is not None:
+                # Save points
+                pcd_points = o3d.geometry.PointCloud()
+                for p in droid_visualization.points.items():
+                    pcd_points += p[1]
+                o3d.io.write_point_cloud(f"{save_path}/points.ply", pcd_points, write_ascii=False)
+                    
+                # Save pose
+                pcd_camera = create_camera_actor(True)
+                for c in droid_visualization.cameras.items():
+                    pcd_camera += c[1]
+
+                o3d.io.write_line_set(f"{save_path}/camera.ply", pcd_camera, write_ascii=False)
+
+                ### end ###
+
 
             # hack to allow interacting with vizualization during inference
             if len(droid_visualization.cameras) >= droid_visualization.warmup:

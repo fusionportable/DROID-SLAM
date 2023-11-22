@@ -117,6 +117,7 @@ if __name__ == '__main__':
     traj_ref, traj_est = sync.associate_trajectories(traj_ref, traj_est)
     result = main_ape.ape(traj_ref, traj_est, est_name='traj', 
         pose_relation=PoseRelation.translation_part, align=True, correct_scale=True)
+    
 
 
     print(result)

@@ -10,6 +10,9 @@ import os
 import glob 
 import time
 import argparse
+from evo.core.trajectory import PoseTrajectory3D
+from evo.tools import file_interface
+
 
 from torch.multiprocessing import Process
 from droid import Droid
@@ -34,7 +37,8 @@ def image_stream(imagedir, calib, stride):
     K[1,1] = fy
     K[1,2] = cy
 
-    image_list = sorted(os.listdir(imagedir))[::stride]
+    # image_list = sorted(os.listdir(imagedir))[::stride]
+    image_list = sorted(glob.glob(os.path.join(imagedir, '*.png')))[::stride]
 
     for t, imfile in enumerate(image_list):
         image = cv2.imread(os.path.join(imagedir, imfile))
@@ -75,6 +79,7 @@ def save_reconstruction(droid, reconstruction_path):
     np.save("reconstructions/{}/disps.npy".format(reconstruction_path), disps)
     np.save("reconstructions/{}/poses.npy".format(reconstruction_path), poses)
     np.save("reconstructions/{}/intrinsics.npy".format(reconstruction_path), intrinsics)
+    print("Saved reconstruction to reconstructions/{}".format(reconstruction_path))
 
 
 if __name__ == '__main__':
@@ -86,7 +91,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--weights", default="droid.pth")
     parser.add_argument("--buffer", type=int, default=512)
-    parser.add_argument("--image_size", default=[240, 320])
+    parser.add_argument("--image_size", default=[480, 640])
     parser.add_argument("--disable_vis", action="store_true")
 
     parser.add_argument("--beta", type=float, default=0.3, help="weight for translation / rotation components of flow")
@@ -116,6 +121,7 @@ if __name__ == '__main__':
 
     tstamps = []
     for (t, image, intrinsics) in tqdm(image_stream(args.imagedir, args.calib, args.stride)):
+        tstamps.append(t)
         if t < args.t0:
             continue
 
@@ -128,7 +134,17 @@ if __name__ == '__main__':
         
         droid.track(t, image, intrinsics=intrinsics)
 
-    if args.reconstruction_path is not None:
-        save_reconstruction(droid, args.reconstruction_path)
+    # if args.reconstruction_path is not None:
+    #     save_reconstruction(droid, args.reconstruction_path)
 
     traj_est = droid.terminate(image_stream(args.imagedir, args.calib, args.stride))
+    print(traj_est)
+    print(traj_est.shape)
+
+    traj_est = PoseTrajectory3D(
+        positions_xyz=traj_est[:,:3],
+        orientations_quat_wxyz=traj_est[:,3:],
+        timestamps=np.array(tstamps))
+
+    file_interface.write_tum_trajectory_file(os.path.join(args.imagedir, "traj_est.txt"), traj_est)
+    # traj_est_tum(os.path.join(args.imagedir, "traj_est.txt"))
