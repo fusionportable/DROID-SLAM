@@ -138,8 +138,8 @@ if __name__ == '__main__':
     #     save_reconstruction(droid, args.reconstruction_path)
 
     traj_est = droid.terminate(image_stream(args.imagedir, args.calib, args.stride))
-    print(traj_est)
-    print(traj_est.shape)
+    # print(traj_est)
+    # print(traj_est.shape)
 
     traj_est = PoseTrajectory3D(
         positions_xyz=traj_est[:,:3],

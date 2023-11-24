@@ -20,7 +20,7 @@ class Droid:
         self.args = args
         self.disable_vis = args.disable_vis
         
-        self.reconstruction_path = args.reconstruction_path is args.reconstruction_path is not None
+        self.reconstruction_path = args.reconstruction_path
 
         # store images, depth, poses, intrinsics (shared between processes)
         self.video = DepthVideo(args.image_size, args.buffer, stereo=args.stereo)

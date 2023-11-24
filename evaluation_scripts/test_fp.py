@@ -11,7 +11,8 @@ import glob
 import time
 import argparse
 from evo.core.trajectory import PoseTrajectory3D
-
+from evo.tools import file_interface
+import open3d as o3d
 
 import torch.nn.functional as F
 from droid import Droid
@@ -23,7 +24,7 @@ def show_image(image):
     cv2.imshow('image', image / 255.0)
     cv2.waitKey(1)
 
-def image_stream(datapath, calib, image_size=[320, 512]):
+def image_stream(image_list, calib, image_size=[240, 320]):
     """ image generator """
 
     calib = np.loadtxt(calib, delimiter=" ")
@@ -35,39 +36,52 @@ def image_stream(datapath, calib, image_size=[320, 512]):
     K[1,1] = fy
     K[1,2] = cy
 
-    # read all png images in folder
-    image_dir = os.path.join(datapath, 'left')
-    images_list = sorted(glob.glob(os.path.join(image_dir, '*.png')))
+    # read image list
+    # rgb_list = os.path.join(datapath, rgb_list)
+    # rgb_list = np.loadtxt(rgb_list, delimiter=' ', dtype=np.unicode_)
+    
+    # self.timestamps = rgb_list[:,0].astype(np.float)
+    # self.images = [osp.join(datapath, x) for x in rgb_list[:,1]]
+    # self.images = self.images[::rate]
+    # self.timestamps = self.timestamps[::rate]
+    # timestamps = rgb_list[:,0].astype(float)
+    # images = [os.path.join(datapath, x) for x in rgb_list[:,1]]
+
+    # image_dir = os.path.join(datapath, 'left')
+    # images_list = sorted(glob.glob(os.path.join(image_dir, '*.png')))
       
-    for t, imfile in enumerate(images_list):
-        image = cv2.imread(os.path.join(image_dir, imfile))
+    for t, imfile in enumerate(image_list):
+        image = cv2.imread(imfile)
         if len(calib) > 4:
             image = cv2.undistort(image, K, calib[4:])
 
         h0, w0, _ = image.shape
-        h1 = int(h0 * np.sqrt((384 * 512) / (h0 * w0)))
-        w1 = int(w0 * np.sqrt((384 * 512) / (h0 * w0)))
+        # h1 = int(h0 * np.sqrt((384 * 512) / (h0 * w0)))
+        # w1 = int(w0 * np.sqrt((384 * 512) / (h0 * w0)))
 
+        # image = cv2.resize(image, (w1, h1))
+        h1, w1 = image_size
         image = cv2.resize(image, (w1, h1))
-        image = image[:h1-h1%8, :w1-w1%8]
-      #   print(image.shape)
+
+        # image = image[:h1-h1%8, :w1-w1%8]
         image = torch.as_tensor(image).permute(2, 0, 1)
-      #   print(image.shape)
 
         intrinsics = torch.as_tensor([fx, fy, cx, cy])
-        intrinsics[0::2] *= (w1 / w0)
-        intrinsics[1::2] *= (h1 / h0)
+        intrinsics[0::2] *= (image.shape[2] / w0)
+        intrinsics[1::2] *= (image.shape[1] / h0)
 
         yield t, image[None], intrinsics
 
-if __name__ == '__main__':
+
+def parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--datapath")
+    parser.add_argument("--root")
     parser.add_argument("--weights", default="droid.pth")
     parser.add_argument("--buffer", type=int, default=512)
     parser.add_argument("--image_size", default=[240, 320])
     parser.add_argument("--disable_vis", action="store_true")
     parser.add_argument("--calib")
+    parser.add_argument("--rgb_list")
     
     parser.add_argument("--beta", type=float, default=0.6)
     parser.add_argument("--filter_thresh", type=float, default=1.75)
@@ -81,34 +95,44 @@ if __name__ == '__main__':
     parser.add_argument("--backend_thresh", type=float, default=15.0)
     parser.add_argument("--backend_radius", type=int, default=2)
     parser.add_argument("--backend_nms", type=int, default=3)
-    parser.add_argument("--timestamp", type=str, default="tstamps.txt")
+    # parser.add_argument("--timestamp", type=str, default="tstamps.txt")
     parser.add_argument("--reconstruction_path", help="path to saved reconstruction")
     parser.add_argument("--upsample", action="store_true")
 
     args = parser.parse_args()
 
+    return args
+
+
+if __name__ == '__main__':
+    args = parser()
     args.stereo = False
+
     torch.multiprocessing.set_start_method('spawn')
 
-    print("Running evaluation on {}".format(args.datapath))
+    print("Running evaluation on {}".format(args.root))
     print(args)
+
+    # load image stream
+    rgb_list = os.path.join(args.root, args.rgb_list)
+    rgb_list = np.loadtxt(rgb_list, delimiter=' ', dtype=np.unicode_)
+    image_dir = os.path.join(args.root, 'frame_left')
+    images = [os.path.join(image_dir, x) for x in rgb_list[:,1]]
+    timestamps = rgb_list[:,0].astype(np.float64)
 
     if args.reconstruction_path is not None:
         args.upsample = True
 
     droid = Droid(args)
     time.sleep(5)
-
-    tstamps = []
-    tstamps = np.loadtxt(os.path.join(args.datapath, args.timestamp))
-    for (t, image, intrinsics) in tqdm(image_stream(args.datapath, args.calib)):
+    
+    for (t, image, intrinsics) in tqdm(image_stream(images, args.calib), total=len(images)):
       #   print(image.shape)
         if not args.disable_vis:
             show_image(image[0])
         droid.track(t, image, intrinsics=intrinsics)
 
-
-    traj_est = droid.terminate(image_stream(args.datapath, args.calib))
+    traj_est = droid.terminate(image_stream(images, args.calib))
 
     ### run evaluation ###
     print("#"*20 + " Results...")
@@ -116,7 +140,13 @@ if __name__ == '__main__':
     traj_est = PoseTrajectory3D(
         positions_xyz=traj_est[:,:3],
         orientations_quat_wxyz=traj_est[:,3:],
-        timestamps=np.array(tstamps))
+        timestamps=np.array(timestamps))
+
+    file_interface.write_tum_trajectory_file(os.path.join(args.root, f"traj_est_droid.txt"), traj_est)
+
+    print("Saved trajectory to {}".format(os.path.join(args.root, f"traj_est_droid.txt")))
+    cv2.destroyAllWindows()
+    # o3d.visualization.Visualizer.close()
 
 
 #     print("#"*20 + " Results...")
