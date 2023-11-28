@@ -46,6 +46,9 @@ def create_camera_actor(g, scale=0.05):
 def create_point_actor(points, colors):
     """ open3d point cloud from numpy array """
     point_cloud = o3d.geometry.PointCloud()
+    # reverse z axis
+    # points[:,2] *= -1
+    # reverse z axis
     point_cloud.points = o3d.utility.Vector3dVector(points)
     point_cloud.colors = o3d.utility.Vector3dVector(colors)
     return point_cloud
@@ -130,7 +133,7 @@ def droid_visualization(video, device="cuda:0", save_path=None):
                 
                 ## add point actor ###
                 point_actor = create_point_actor(pts, clr)
-                vis.add_geometry(point_actor)
+                vis.add_geometry(point_actor)   
                 droid_visualization.points[ix] = point_actor
 
             if save_path is not None:

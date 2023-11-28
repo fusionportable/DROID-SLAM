@@ -1,6 +1,8 @@
 import sys
 sys.path.append('droid_slam')
 
+import time
+
 from tqdm import tqdm
 import numpy as np
 import torch
@@ -77,7 +79,7 @@ def parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root")
     parser.add_argument("--weights", default="droid.pth")
-    parser.add_argument("--buffer", type=int, default=512)
+    parser.add_argument("--buffer", type=int, default=1024)
     parser.add_argument("--image_size", default=[240, 320])
     parser.add_argument("--disable_vis", action="store_true")
     parser.add_argument("--calib")
@@ -125,7 +127,7 @@ if __name__ == '__main__':
 
     droid = Droid(args)
     time.sleep(5)
-    
+    start_time = time.time()
     for (t, image, intrinsics) in tqdm(image_stream(images, args.calib), total=len(images)):
       #   print(image.shape)
         if not args.disable_vis:
@@ -133,6 +135,10 @@ if __name__ == '__main__':
         droid.track(t, image, intrinsics=intrinsics)
 
     traj_est = droid.terminate(image_stream(images, args.calib))
+    end_time = time.time()
+    total_runtime = end_time - start_time
+    print("Total runtime: ", total_runtime)
+    print("FPS: ", len(images) / toal_runtime)
 
     ### run evaluation ###
     print("#"*20 + " Results...")
