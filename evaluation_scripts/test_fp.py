@@ -138,7 +138,7 @@ if __name__ == '__main__':
     end_time = time.time()
     total_runtime = end_time - start_time
     print("Total runtime: ", total_runtime)
-    print("FPS: ", len(images) / toal_runtime)
+    print("FPS: ", len(images) / total_runtime)
 
     ### run evaluation ###
     print("#"*20 + " Results...")

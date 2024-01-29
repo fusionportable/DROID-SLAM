@@ -32,6 +32,7 @@ python evaluation_scripts/test_fp.py --root=/mnt/DATA_JW/dataset/FusionPortable_
 |          | room00      |     |  :white_check_mark: |
 | Quadruped| grass01     |   | :white_check_mark:| 
 |          | room00      |      |:white_check_mark: |
+|          | grass00     |      | |
 | Mini Hercules | campus00 |    | :white_check_mark:|
 |               | parking00|     | :white_check_mark:|
 | Vehicle       | campus00 |     | :white_check_mark:|
