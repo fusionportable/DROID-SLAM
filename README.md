@@ -114,6 +114,17 @@ Download the fr1 sequences from [TUM-RGBD](https://vision.in.tum.de/data/dataset
 ./tools/evaluate_tum.sh                               # monocular eval
 ```
 
+### FusionPortable (Mono)
+- Download the original ros-bag from [FusionPortableV2](https://fusionportable.github.io/dataset/fusionportable_v2/)
+- Extract images from original ros-bag
+  ```Bash
+  python tools/bag_to_images.py --bag_file=xx/ --output_dir=xx/ --topic=/stereo/frame_left/image_raw/compressed --timestamp=xx/
+  ```
+- Run Droid-SLAM
+  ```Bash
+  python evaluation_scripts/test_fp.py --root=/Path/to/fusionportable/data --weights=droid.pth --calib=calib/fusionportable_left.txt --rgb_list=frame_left.txt
+  ```
+
 ### ETH3D (RGB-D)
 Download the [ETH3D](https://www.eth3d.net/slam_datasets) dataset
 ```Bash
