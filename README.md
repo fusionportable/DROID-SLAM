@@ -1,12 +1,12 @@
 # DROID-SLAM
+:exclamation::exclamation:This is a fork repo from original DROID-SLAM, thanks for their amazing work! :+1::+1:
 
-
+If you use any code in this repo, please remember to cite DROID-SLAM.
 <!-- <center><img src="misc/DROID.png" width="640" style="center"></center> -->
 
+### [Quick Run DROID on FusionPortableV2](#fusionportable-mono)
 
-[![IMAGE ALT TEXT HERE](misc/screenshot.png)](https://www.youtube.com/watch?v=GG78CSlSHSA)
-
-
+<!-- [![IMAGE ALT TEXT HERE](misc/screenshot.png)](https://www.youtube.com/watch?v=GG78CSlSHSA) -->
 
 [DROID-SLAM: Deep Visual SLAM for Monocular, Stereo, and RGB-D Cameras](https://arxiv.org/abs/2108.10869)  
 Zachary Teed and Jia Deng
