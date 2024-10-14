@@ -45,6 +45,7 @@ git clone --recursive https://github.com/princeton-vl/DROID-SLAM.git
 conda env create -f environment.yaml
 conda activate droidenv
 conda install cudatoolkit-dev=11.3
+pip install git+https://github.com/princeton-vl/lietorch.git
 pip install evo --upgrade --no-binary evo
 pip install gdown
 pip install open3d -U
